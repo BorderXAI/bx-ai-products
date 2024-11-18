@@ -1,3 +1,1 @@
-# bxai-solutions
-
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/borderxais/bxai-solutions)
+# BorderX AI Solutions
