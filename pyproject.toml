@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "bx-ai-products"
+version = "0.1.0"
+description = "BorderX AI Products"
+authors = ["BorderXAI <info@borderxai.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+fastapi = ">=0.100.0"
+uvicorn = ">=0.25.0"
+aiohttp = ">=3.9.0"
+python-dotenv = ">=1.0.0"
+pydantic = ">=2.0.0"
+apify-client = ">=1.8.1"
+typing-extensions = ">=4.8.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "7.4.3"
+pytest-asyncio = "0.21.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api" 
