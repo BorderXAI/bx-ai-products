@@ -7,10 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.bolt/
+
+# Build and distribution
 dist
 dist-ssr
+build/
 *.local
+*.egg-info/
 
 # Editor directories and files
 .vscode/*
@@ -29,3 +38,31 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Cache directories
+.cache/
+.pytest_cache/
+.coverage
+coverage/
+
+# Database files
+*.sqlite
+*.db
+
+# Media and large files
+*.mp4
+*.mov
+*.avi
+*.wmv
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.ico
+uploads/
+media/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
