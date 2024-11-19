@@ -6,3 +6,4 @@ pydantic>=1.8.0
 pytest>=7.4.3
 pytest-asyncio>=0.21.1
 apify-client>=1.8.1
+typing-extensions>=4.8.0
