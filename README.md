@@ -7,4 +7,4 @@
 
 ## Start the Application
 -  pnpm run dev  (for frontend)
--  pnpm run server (for backend)
+-  python3 -m uvicorn src.server.main:app --reload --port 8000 (for python backend)
