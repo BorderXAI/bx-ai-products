@@ -1,252 +1,321 @@
 import React, { useState, useEffect } from 'react';
-import { Play, ThumbsUp, MessageSquare, Share2, Eye, Clock, Target, Users, Sparkles, ArrowRight, Download } from 'lucide-react';
+import { Play, ThumbsUp, MessageSquare, Share2, Eye, Clock, Target, Users, Sparkles, ArrowRight, Download, Search } from 'lucide-react';
 
 interface InspirationVideo {
   id: string;
-  thumbnail: string;
-  title: string;
-  creator: string;
-  views: string;
-  likes: string;
-  comments: string;
-  shares: string;
-  duration: string;
-  category: string;
-  targetAudience: string;
-  similarityScore: number;
-  keyTakeaways: string[];
+  text: string;
+  createTimeISO: string;
+  webVideoUrl: string;
+  videoMeta: {
+    duration: number;
+    coverUrl: string;
+  };
+  authorMeta: {
+    name: string;
+    avatar: string;
+  };
+  diggCount: number;
+  shareCount: number;
+  playCount: number;
+  commentCount: number;
+  collectCount: number;
+  hashtags: string[];
+  musicMeta: {
+    musicName: string;
+    musicAuthor: string;
+    musicOriginal: boolean;
+  };
 }
 
 export function VideoInspiration() {
-  const [videos, setVideos] = useState<InspirationVideo[]>([
-    {
-      id: '1',
-      thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=600',
-      title: 'Morning Skincare Routine 2024',
-      creator: '@beautyexpert',
-      views: '1.2M',
-      likes: '245K',
-      comments: '3.2K',
-      shares: '15K',
-      duration: '0:45',
-      category: 'Beauty & Skincare',
-      targetAudience: 'Women 18-34',
-      similarityScore: 92,
-      keyTakeaways: [
-        'Quick, engaging transitions',
-        'Product close-ups with text overlays',
-        'Natural lighting techniques'
-      ]
-    },
-    {
-      id: '2',
-      thumbnail: 'https://images.unsplash.com/photo-1596273312170-6c05c3021adf?w=400&h=600',
-      title: '5 Must-Have Beauty Tools',
-      creator: '@glowguide',
-      views: '890K',
-      likes: '178K',
-      comments: '2.8K',
-      shares: '12K',
-      duration: '0:60',
-      category: 'Beauty & Skincare',
-      targetAudience: 'Women 25-45',
-      similarityScore: 88,
-      keyTakeaways: [
-        'Educational content format',
-        'Before/after demonstrations',
-        'Expert tips integration'
-      ]
-    },
-    {
-      id: '3',
-      thumbnail: 'https://images.unsplash.com/photo-1583241800698-e8ab01830a07?w=400&h=600',
-      title: 'Night Skincare Secrets',
-      creator: '@skincarepro',
-      views: '950K',
-      likes: '200K',
-      comments: '4.1K',
-      shares: '18K',
-      duration: '0:55',
-      category: 'Beauty & Skincare',
-      targetAudience: 'Women 20-40',
-      similarityScore: 85,
-      keyTakeaways: [
-        'Relaxing ambiance setup',
-        'Step-by-step routine guide',
-        'Product layering techniques'
-      ]
-    },
-    {
-      id: '4',
-      thumbnail: 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=400&h=600',
-      title: 'Anti-Aging Essentials',
-      creator: '@agelessbeauty',
-      views: '780K',
-      likes: '156K',
-      comments: '2.9K',
-      shares: '14K',
-      duration: '0:50',
-      category: 'Beauty & Skincare',
-      targetAudience: 'Women 30-50',
-      similarityScore: 82,
-      keyTakeaways: [
-        'Scientific explanations',
-        'Ingredient spotlights',
-        'Long-term benefits focus'
-      ]
-    },
-    {
-      id: '5',
-      thumbnail: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=400&h=600',
-      title: 'Quick Makeup Transformation',
-      creator: '@makeupmaster',
-      views: '1.1M',
-      likes: '220K',
-      comments: '3.8K',
-      shares: '16K',
-      duration: '0:40',
-      category: 'Beauty & Skincare',
-      targetAudience: 'Women 18-35',
-      similarityScore: 90,
-      keyTakeaways: [
-        'Time-saving techniques',
-        'Product application hacks',
-        'Professional finish tips'
-      ]
-    },
-    {
-      id: '6',
-      thumbnail: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=600',
-      title: 'Viral Beauty Hacks Tested',
-      creator: '@beautyhacker',
-      views: '1.5M',
-      likes: '280K',
-      comments: '5.2K',
-      shares: '22K',
-      duration: '0:58',
-      category: 'Beauty & Skincare',
-      targetAudience: 'Women 18-40',
-      similarityScore: 87,
-      keyTakeaways: [
-        'Trend analysis',
-        'Reality vs expectations',
-        'Money-saving alternatives'
-      ]
+  const [videos, setVideos] = useState<InspirationVideo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [videoLimit, setVideoLimit] = useState(10);
+  const [isSearching, setIsSearching] = useState(false);
+  const API_BASE_URL = 'http://localhost:8000';
+
+  const fetchVideos = async (hashtags?: string, limit?: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      setVideos([]);
+      
+      // Format hashtags: remove special characters and spaces
+      const formattedHashtags = hashtags
+        ? hashtags
+            .split(',')
+            .map(tag => tag.trim().toLowerCase().replace(/[^a-z0-9]/g, ''))
+            .filter(tag => tag)
+            .join(',')
+        : '';
+      
+      const url = new URL(`${API_BASE_URL}/api/inspiration-videos`);
+      if (formattedHashtags) {
+        url.searchParams.append('hashtags', formattedHashtags);
+      }
+      if (limit) {
+        url.searchParams.append('limit', limit.toString());
+      }
+      
+      console.log('Fetching videos from:', url.toString());
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+
+      const response = await fetch(url.toString(), {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
+      const data = await response.json();
+      console.log('API Response:', data);
+      
+      if (!response.ok) {
+        const errorMessage = data.detail?.message || data.detail || 'Failed to fetch inspiration videos';
+        throw new Error(errorMessage);
+      }
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format: expected an array of videos');
+      }
+      
+      if (data.length === 0) {
+        setError('No videos found for the given hashtags. Try different hashtags or wait a few minutes and try again.');
+        return;
+      }
+      
+      setVideos(data);
+    } catch (err) {
+      console.error('Error fetching videos:', err);
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          setError('The request took too long. The APIFY scraper might be busy. Please try again in a few minutes.');
+        } else {
+          setError(`Failed to load videos: ${err.message}`);
+        }
+      } else {
+        setError('An unexpected error occurred while fetching videos. Please try again.');
+      }
+      setVideos([]);
+    } finally {
+      setLoading(false);
+      setIsSearching(false);
     }
-  ]);
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+    
+    setIsSearching(true);
+    await fetchVideos(searchTerm.trim(), videoLimit);
+  };
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    if (videos.length > 0) {
+      console.log('Received videos data:', videos);
+      // 验证数据完整性
+      const hasEmptyFields = videos.some(video => 
+        !video.id || 
+        !video.authorMeta?.name ||
+        !video.videoMeta?.duration
+      );
+      if (hasEmptyFields) {
+        console.warn('Some videos have missing required fields');
+      }
+    }
+  }, [videos]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {/* Section Header */}
+      {/* Search Section */}
       <div className="bg-white p-6 rounded-xl shadow-md">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Sparkles className="h-6 w-6 text-indigo-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Today's Video Inspiration</h2>
-              <p className="text-gray-600">Curated content based on your niche and style</p>
-            </div>
-          </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-            <Download className="h-5 w-5" />
-            <span>Export Insights</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="h-5 w-5 text-indigo-600" />
-              <span className="font-medium">Your Niche</span>
-            </div>
-            <p className="text-gray-700">Beauty & Skincare</p>
-          </div>
-
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="h-5 w-5 text-indigo-600" />
-              <span className="font-medium">Target Audience</span>
-            </div>
-            <p className="text-gray-700">Women, 18-35</p>
-          </div>
-
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-5 w-5 text-indigo-600" />
-              <span className="font-medium">Best Posting Time</span>
-            </div>
-            <p className="text-gray-700">7:00 PM - 9:00 PM</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Video Grid */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {videos.map(video => (
-          <div key={video.id} className="bg-white rounded-xl shadow-md overflow-hidden">
-            {/* Video Preview */}
-            <div className="relative aspect-[9/16] bg-gray-900">
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="w-full h-full object-cover"
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Search Inspiration Videos</h2>
+        <form onSubmit={handleSearch} className="space-y-4">
+          <div>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Enter hashtags (e.g., skincare, beauty)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                disabled={isSearching}
               />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <button className="p-4 bg-white/20 rounded-full backdrop-blur-sm">
-                  <Play className="h-8 w-8 text-white" />
-                </button>
-              </div>
-              <div className="absolute top-4 right-4 px-3 py-1 bg-indigo-600 text-white rounded-full text-sm">
-                {video.duration}
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                <h3 className="text-white font-semibold mb-1">{video.title}</h3>
-                <p className="text-white/80 text-sm">{video.creator}</p>
-              </div>
+              <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
             </div>
-
-            {/* Video Stats */}
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                  {video.similarityScore}% Match
-                </span>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{video.views}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ThumbsUp className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{video.likes}</span>
-                  </div>
-                </div>
+            <p className="mt-1 text-sm text-gray-500">
+              Separate multiple hashtags with commas (e.g., skincare, beauty, routine)
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-32">
+              <label htmlFor="videoLimit" className="block text-sm font-medium text-gray-700 mb-1">
+                Number of Videos
+              </label>
+              <input
+                type="number"
+                id="videoLimit"
+                min="1"
+                max="50"
+                value={videoLimit}
+                onChange={(e) => setVideoLimit(Math.min(50, Math.max(1, parseInt(e.target.value) || 1)))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                disabled={isSearching}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSearching || !searchTerm.trim()}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+        </form>
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
               </div>
-
-              <div className="space-y-3">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Key Takeaways</h4>
-                  <div className="space-y-1">
-                    {video.keyTakeaways.map((takeaway, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <ArrowRight className="h-4 w-4 text-indigo-600 mt-1" />
-                        <p className="text-sm text-gray-600">{takeaway}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100">
-                  <Sparkles className="h-4 w-4" />
-                  <span>Get More Insights</span>
-                </button>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <p className="mt-2 text-sm text-red-600">
+                  Note: TikTok data scraping can sometimes be unreliable. If you continue to see errors, try:
+                  <ul className="list-disc ml-5 mt-1">
+                    <li>Using different hashtags</li>
+                    <li>Waiting a few minutes before trying again</li>
+                    <li>Reducing the number of requested videos</li>
+                  </ul>
+                </p>
               </div>
             </div>
           </div>
-        ))}
+        )}
       </div>
+
+      {/* Video Table */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">Video</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plays</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Likes</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shares</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bookmarks</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Create Time</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Music</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {videos.map((video) => (
+                <tr key={video.id}>
+                  <td className="px-4 py-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <img 
+                          className="h-10 w-10 rounded-full" 
+                          src={video.authorMeta?.avatar || ''} 
+                          alt={video.authorMeta?.name || 'Author'} 
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {video.authorMeta?.name || 'Unknown Author'}
+                        </div>
+                        <div className="text-sm text-gray-500 break-words line-clamp-2 max-w-xs">
+                          {video.text || ''}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">
+                    <a
+                      href={video.webVideoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    >
+                      <Play className="h-3 w-3 mr-1" />
+                      Watch
+                    </a>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(video.playCount || 0)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(video.diggCount || 0)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(video.commentCount || 0)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(video.shareCount || 0)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatNumber(video.collectCount || 0)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDuration(video.videoMeta?.duration || 0)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {video.createTimeISO ? new Date(video.createTimeISO).toLocaleDateString() : 'Unknown Date'}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="max-w-xs">
+                      <div className="text-sm text-gray-900 truncate">{video.musicMeta?.musicName || 'Unknown Music'}</div>
+                      <div className="text-sm text-gray-500 truncate">by {video.musicMeta?.musicAuthor || 'Unknown Artist'}</div>
+                      {video.musicMeta?.musicOriginal && (
+                        <span className="px-2 py-0.5 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+                          Original
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {videos.length === 0 && !loading && !error && (
+        <div className="text-center py-8 text-gray-500">
+          Enter hashtags above and click search to find TikTok videos.
+        </div>
+      )}
     </div>
   );
 }
