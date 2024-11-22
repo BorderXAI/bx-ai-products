@@ -158,7 +158,7 @@ export function VideoInspiration() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Enter hashtags (e.g., skincare, beauty)"
+                placeholder="Enter hashtags (e.g., skincare, beauty)" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"

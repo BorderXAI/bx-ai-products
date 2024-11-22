@@ -3,6 +3,8 @@ from typing import List, Dict, Any, Optional
 from ..services.tiktok_scraper import TikTokScraperService
 from pydantic import BaseModel, Field
 import logging
+import json
+from ..redis_client import get_redis_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -95,6 +97,9 @@ async def get_inspiration_videos(
     )
 ) -> List[TikTokVideo]:
     try:
+        #redis
+        redis_client = await get_redis_client()
+        
         # Convert comma-separated string to list and clean up hashtags
         hashtag_list = None
         if hashtags:
@@ -105,9 +110,28 @@ async def get_inspiration_videos(
                 if tag.strip()
             ]
             logger.info(f"Searching for hashtags: {hashtag_list}")
+            
+        # Create a cache key using the hashtags
+        cache_key = f"inspiration_videos:{','.join(hashtag_list)}" if hashtag_list else "inspiration_videos:default"
+
+        # Check Redis cache for existing data
+        cached_data = await redis_client.get(cache_key)
+        if cached_data:
+            logger.info("Cache hit for key: {cache_key}")
+            return [TikTokVideo(**video) for video in json.loads(cached_data)]
+        else:
+            logger.info("Cache miss for key: {cache_key}")
         
+        # If no cache hit, fetch data from TikTok service
         videos = await tiktok_service.fetch_inspiration_videos(hashtag_list)
+        
+        # Store the result in Redis cache for 1 hour (3600 seconds)
+        await redis_client.setex(cache_key, 3600, json.dumps([video.dict() for video in videos]))
+        # Log cache storage
+        logger.info(f"Stored data in cache with key: {cache_key}")  
+
         return videos
+    
     except ValueError as e:
         logger.error(f"Validation error: {str(e)}")
         raise HTTPException(
