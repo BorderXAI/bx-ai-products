@@ -117,10 +117,10 @@ async def get_inspiration_videos(
         # Check Redis cache for existing data
         cached_data = await redis_client.get(cache_key)
         if cached_data:
-            logger.info("Cache hit for key: {cache_key}")
+            logger.info(f"Cache hit for key: {cache_key}")
             return [TikTokVideo(**video) for video in json.loads(cached_data)]
         else:
-            logger.info("Cache miss for key: {cache_key}")
+            logger.info(f"Cache miss for key: {cache_key}")
         
         # If no cache hit, fetch data from TikTok service
         videos = await tiktok_service.fetch_inspiration_videos(hashtag_list)
