@@ -126,7 +126,7 @@ async def get_inspiration_videos(
         videos = await tiktok_service.fetch_inspiration_videos(hashtag_list)
         
         # Store the result in Redis cache for 1 hour (3600 seconds)
-        await redis_client.setex(cache_key, 3600, json.dumps([video.dict() for video in videos]))
+        await redis_client.setex(cache_key, 3600, json.dumps(videos))
         # Log cache storage
         logger.info(f"Stored data in cache with key: {cache_key}")  
 
