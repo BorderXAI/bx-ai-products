@@ -4,6 +4,7 @@
 - Install node.js from https://nodejs.org/
 - 'npm install -g pnpm'
 - 'pnpm install'
+- 'pip install -r requirements.txt'
 
 ## Start the Application
 -  pnpm run dev  (for frontend)
