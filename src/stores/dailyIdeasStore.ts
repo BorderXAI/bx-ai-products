@@ -27,7 +27,7 @@ export const useDailyIdeasStore = create<DailyIdeasState>((set) => ({
   fetchDailyIdeas: async () => {
     try {
       set({ loading: true, error: null });
-      const response = await fetch('http://localhost:3000/api/content/daily-ideas');
+      const response = await fetch(`http://localhost:8000/api/content/daily-ideas`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -57,7 +57,7 @@ export const useDailyIdeasStore = create<DailyIdeasState>((set) => ({
   refreshIdeas: async () => {
     try {
       set({ loading: true, error: null });
-      const response = await fetch('http://localhost:3000/api/content/daily-ideas');
+      const response = await fetch(`http://localhost:8000/api/content/daily-ideas`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

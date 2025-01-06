@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routes.tiktok_routes import router as tiktok_router
+from .routes.creators import router as creators_router
 
 app = FastAPI()
 
@@ -15,6 +16,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(tiktok_router)
+app.include_router(creators_router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
