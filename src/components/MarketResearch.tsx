@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Search, ChevronDown, BarChart2, Users, Target, Brain, AlertCircle, Upload, Download, Loader2, LineChart, PieChart, DollarSign, TrendingUp, Bell, Zap } from 'lucide-react';
 import { useAI } from '../hooks/useAI';
 import ResearchResults from './ResearchResults';
+import { topCategories, marketTrends } from '../data/categoryInsights';
+import { CategoryCard } from "./landing/CategoryCard";
+import { MarketTrends } from './landing/MarketTrends';
+import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 
 interface URLInput {
   url: string;
@@ -92,6 +96,7 @@ export function MarketResearch() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { loading, generateMarketResearch } = useAI();
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const regions = {
     us: { flag: "🇺🇸", name: "United States" },
@@ -157,6 +162,7 @@ export function MarketResearch() {
     // Simulate API delay
     setTimeout(() => {
       setResults(mockAnalysis);
+      setShowAnalysis(true);
       setIsAnalyzing(false);
     }, 2000);
   };
@@ -171,6 +177,11 @@ export function MarketResearch() {
         <p className="text-xl text-gray-600">
           Get comprehensive market insights from any e-commerce product URL
         </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {topCategories.map((category) => (
+          <CategoryCard key={category.id} category={category} />
+        ))}
       </div>
 
       {/* Main Form */}
@@ -319,7 +330,23 @@ export function MarketResearch() {
       </div>
 
       {/* Results Section */}
-      {results && <ResearchResults data={results} />}
+      {results && (
+        <div className="mb-12">
+          <ResearchResults data={results} />
+        </div>
+      )}
+
+      {/* Analysis Dashboard */}
+      {showAnalysis && !isAnalyzing && (
+        <div className="mb-12">
+          <AnalysisDashboard />
+        </div>
+      )}
+
+      {/* Market Trends Section */}
+      <div className="bg-white p-6 rounded-xl shadow-md mb-12 mt-8">
+        <MarketTrends trends={marketTrends} />
+      </div>
     </div>
   );
 }
