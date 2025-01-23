@@ -1,0 +1,150 @@
+// import React from 'react';
+// import { MessageCircle, ThumbsUp, ThumbsDown, Meh } from 'lucide-react';
+// import type { SentimentData } from '../../types/analysis';
+
+// interface Props {
+//   data: SentimentData;
+// }
+
+// export function SentimentAnalysis({ data }: Props) {
+//   return (
+//     <div className="bg-white rounded-xl shadow-sm p-6">
+//       <div className="flex items-center gap-2 mb-6">
+//         <MessageCircle className="w-5 h-5 text-blue-600" />
+//         <h3 className="text-xl font-bold text-gray-900">Customer Sentiment</h3>
+//       </div>
+
+//       <div className="grid grid-cols-3 gap-6 mb-8">
+//         <div className="text-center">
+//           <div className="flex items-center justify-center mb-2">
+//             <ThumbsUp className="w-8 h-8 text-green-500" />
+//           </div>
+//           <div className="text-2xl font-bold text-gray-900">{(data.positive * 100).toFixed(0)}%</div>
+//           <div className="text-sm text-gray-600">Positive</div>
+//         </div>
+//         <div className="text-center">
+//           <div className="flex items-center justify-center mb-2">
+//             <Meh className="w-8 h-8 text-yellow-500" />
+//           </div>
+//           <div className="text-2xl font-bold text-gray-900">{(data.neutral * 100).toFixed(0)}%</div>
+//           <div className="text-sm text-gray-600">Neutral</div>
+//         </div>
+//         <div className="text-center">
+//           <div className="flex items-center justify-center mb-2">
+//             <ThumbsDown className="w-8 h-8 text-red-500" />
+//           </div>
+//           <div className="text-2xl font-bold text-gray-900">{(data.negative * 100).toFixed(0)}%</div>
+//           <div className="text-sm text-gray-600">Negative</div>
+//         </div>
+//       </div>
+
+//       <div>
+//         <h4 className="font-semibold text-gray-900 mb-4">Key Phrases</h4>
+//         <div className="space-y-3">
+//           {data.topPhrases.map((phrase, index) => (
+//             <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+//               <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm">
+//                 {index + 1}
+//               </span>
+//               <p className="text-gray-700">{phrase}</p>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+import React, { useEffect, useState } from 'react';
+import { MessageCircle, ThumbsUp, ThumbsDown, Meh } from 'lucide-react';
+import type { SentimentData } from '../../types/analysis';
+
+interface Props {}
+
+export function SentimentAnalysis({}: Props) {
+  const [data, setData] = useState<SentimentData | null>(null);
+
+  useEffect(() => {
+    const fetchSentimentData = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/sentiment/sentiment-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify([
+            'The product quality is amazing and works perfectly!',
+            // 'Shipping was very slow, but the product is good.',
+            // 'Not worth the price. Very disappointed.',
+          ]), // Example reviews
+        });
+        const result = await response.json();
+
+        // Transform backend response to match SentimentData type
+        const transformedData: SentimentData = {
+          positive: result.breakdown.positive / result.reviews.length,
+          neutral: result.breakdown.neutral / result.reviews.length,
+          negative: result.breakdown.negative / result.reviews.length,
+          topPhrases: result.key_phrases || [],
+        };
+
+        setData(transformedData);
+      } catch (error) {
+        console.error('Error fetching sentiment data:', error);
+      }
+    };
+
+    fetchSentimentData();
+  }, []);
+
+  if (!data) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <MessageCircle className="w-5 h-5 text-blue-600" />
+        <h3 className="text-xl font-bold text-gray-900">Customer Sentiment</h3>
+      </div>
+
+      <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-2">
+            <ThumbsUp className="w-8 h-8 text-green-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{(data.positive * 100).toFixed(0)}%</div>
+          <div className="text-sm text-gray-600">Positive</div>
+        </div>
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-2">
+            <Meh className="w-8 h-8 text-yellow-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{(data.neutral * 100).toFixed(0)}%</div>
+          <div className="text-sm text-gray-600">Neutral</div>
+        </div>
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-2">
+            <ThumbsDown className="w-8 h-8 text-red-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{(data.negative * 100).toFixed(0)}%</div>
+          <div className="text-sm text-gray-600">Negative</div>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-semibold text-gray-900 mb-4">Key Phrases</h4>
+        <div className="space-y-3">
+          {data.topPhrases.map((phrase, index) => (
+            <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm">
+                {index + 1}
+              </span>
+              <p className="text-gray-700">{phrase}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

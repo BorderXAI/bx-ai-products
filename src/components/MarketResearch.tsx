@@ -7,6 +7,10 @@ import { CategoryCard } from "./landing/CategoryCard";
 import { MarketTrends } from './landing/MarketTrends';
 import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 
+
+const AMAZON_EMAIL = "aven0831@gmail.com"; // Replace with your email
+const AMAZON_PASSWORD = "aven890831";     // Replace with your password
+
 interface URLInput {
   url: string;
   platform: 'tiktok' | 'amazon';
@@ -97,6 +101,7 @@ export function MarketResearch() {
   const [error, setError] = useState<string | null>(null);
   const { loading, generateMarketResearch } = useAI();
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [scrapedData, setScrapedData] = useState({});
 
   const regions = {
     us: { flag: "🇺🇸", name: "United States" },
@@ -158,6 +163,33 @@ export function MarketResearch() {
     }
 
     setIsAnalyzing(true);
+
+    const scrapedData: Record<string, any> = {};
+    for (const { url } of validUrls) {
+      try {
+        // Replace this with your backend API endpoint for scraping
+        const response = await fetch('http://127.0.0.1:8000/api/amazon/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            url, 
+            email: AMAZON_EMAIL, 
+            password: AMAZON_PASSWORD 
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data for ${url}`);
+        }
+  
+        const data = await response.json();
+        scrapedData[url] = data;
+      } catch (error) {
+        console.error(`Error scraping ${url}:`, error);
+      }
+    }
+  
+    setScrapedData(scrapedData);
     
     // Simulate API delay
     setTimeout(() => {
@@ -339,7 +371,7 @@ export function MarketResearch() {
       {/* Analysis Dashboard */}
       {showAnalysis && !isAnalyzing && (
         <div className="mb-12">
-          <AnalysisDashboard />
+          <AnalysisDashboard scrapedData={scrapedData} />
         </div>
       )}
 
