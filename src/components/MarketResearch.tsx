@@ -7,9 +7,12 @@ import { CategoryCard } from "./landing/CategoryCard";
 import { MarketTrends } from './landing/MarketTrends';
 import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 
+const AMAZON_EMAIL = import.meta.env.VITE_AMAZON_EMAIL;
+const AMAZON_PASSWORD = import.meta.env.VITE_AMAZON_PASSWORD;
 
-const AMAZON_EMAIL = "aven0831@gmail.com"; // Replace with your email
-const AMAZON_PASSWORD = "aven890831";     // Replace with your password
+console.log('AMAZON_EMAIL:', AMAZON_EMAIL);
+console.log('AMAZON_PASSWORD:', AMAZON_PASSWORD);
+
 
 interface URLInput {
   url: string;
