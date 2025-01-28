@@ -9,3 +9,7 @@
 ## Start the Application
 -  pnpm run dev  (for frontend)
 -  python3 -m uvicorn src.server.main:app --reload --port 8000 (for python backend)
+
+## Add .env
+- Add the requried key
+- Amazon gmail and password
