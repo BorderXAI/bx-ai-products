@@ -7,6 +7,13 @@ import { CategoryCard } from "./landing/CategoryCard";
 import { MarketTrends } from './landing/MarketTrends';
 import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 
+const AMAZON_EMAIL = import.meta.env.VITE_AMAZON_EMAIL;
+const AMAZON_PASSWORD = import.meta.env.VITE_AMAZON_PASSWORD;
+
+console.log('AMAZON_EMAIL:', AMAZON_EMAIL);
+console.log('AMAZON_PASSWORD:', AMAZON_PASSWORD);
+
+
 interface URLInput {
   url: string;
   platform: 'tiktok' | 'amazon';
@@ -97,6 +104,7 @@ export function MarketResearch() {
   const [error, setError] = useState<string | null>(null);
   const { loading, generateMarketResearch } = useAI();
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [scrapedData, setScrapedData] = useState({});
 
   const regions = {
     us: { flag: "🇺🇸", name: "United States" },
@@ -158,6 +166,33 @@ export function MarketResearch() {
     }
 
     setIsAnalyzing(true);
+
+    const scrapedData: Record<string, any> = {};
+    for (const { url } of validUrls) {
+      try {
+        // Replace this with your backend API endpoint for scraping
+        const response = await fetch('http://127.0.0.1:8000/api/amazon/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            url, 
+            email: AMAZON_EMAIL, 
+            password: AMAZON_PASSWORD 
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data for ${url}`);
+        }
+  
+        const data = await response.json();
+        scrapedData[url] = data;
+      } catch (error) {
+        console.error(`Error scraping ${url}:`, error);
+      }
+    }
+  
+    setScrapedData(scrapedData);
     
     // Simulate API delay
     setTimeout(() => {
@@ -339,7 +374,7 @@ export function MarketResearch() {
       {/* Analysis Dashboard */}
       {showAnalysis && !isAnalyzing && (
         <div className="mb-12">
-          <AnalysisDashboard />
+          <AnalysisDashboard scrapedData={scrapedData} />
         </div>
       )}
 
