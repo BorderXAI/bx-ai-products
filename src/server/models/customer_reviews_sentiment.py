@@ -12,6 +12,7 @@ import logging
 from dotenv import load_dotenv
 import os
 import json
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -90,12 +91,11 @@ def extract_key_phrases(reviews):
             "Your goal is to extract frequently recurring key phrases, categorized as positive or negative. "
             "Key phrases should be concise, ideally 1 to 3 words, such as 'very stable', 'adjustable height', 'good quality'. "
             "Provide the output as a JSON object in the following format:\n\n"
-            "Example:\n"
             "{\n"
             "  \"positive\": [\"Good support\", \"Very chic\", \"Super comfortable\"],\n"
             "  \"negative\": [\"Not worth\", \"Hole forming\", \"Cheap foam\"]\n"
             "}\n\n"
-            "Reviews:\n"
+            "Analyze these reviews:\n"
         )
         prompt += "\n".join(f"- {review}" for review in reviews)
 
@@ -109,20 +109,28 @@ def extract_key_phrases(reviews):
         )
 
         # Extract and log response content
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content.strip()
         logger.debug(f"Extracted content from OpenAI: {content}")
 
-        # Clean up the response to remove code block markers
-        if content.startswith("```json"):
-            content = content[7:-3].strip()  # Remove ```json and trailing ```
+        # Step 1: Remove Markdown Code Blocks (` ```json ... ``` `)
+        content = re.sub(r"```json\n?(.*?)\n?```", r"\1", content, flags=re.DOTALL).strip()
 
-        # Convert the response to a dictionary
-        result = json.loads(content)
-        return result
+        # Step 2: Find JSON within any extra text (if OpenAI returns mixed content)
+        json_match = re.search(r"\{.*\}", content, re.DOTALL)  # Extract JSON block
+        if json_match:
+            content = json_match.group(0)
 
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON: {e}")
-        return {}
+        # Step 3: Safely Load JSON
+        try:
+            result = json.loads(content)
+            return result
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decoding error: {e}")
+
+        # Step 4: Fallback in Case of Error
+        logger.warning("Returning fallback default values.")
+        return {"positive": [], "negative": []}
+
     except Exception as e:
-        logger.error(f"Error while extracting key phrases: {e}")
-        return {}
+        logger.exception("Error while extracting key phrases:")
+        return {"positive": [], "negative": []}

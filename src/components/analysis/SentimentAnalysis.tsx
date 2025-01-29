@@ -25,8 +25,22 @@ export function SentimentAnalysis({ reviews, ratingsBreakdown }: SentimentAnalys
   const [data, setData] = useState<SentimentData | null>(null);
   const [painPoints, setPainPoints] = useState<string[]>([]);
   const [summary, setSummary] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (reviews.length === 0) {
+      setData({
+        positive: 0,
+        neutral: 0,
+        negative: 0,
+        topPhrases: { positive: [], negative: [] },
+      });
+      setSummary("No reviews available.");
+      setPainPoints([]);
+      setIsLoading(false);  // Prevent infinite loading
+      return;
+    }
+
     const fetchSentimentData = async () => {
       try {
         console.log("Reviews being sent to fetchSentimentData:", reviews);
@@ -45,9 +59,22 @@ export function SentimentAnalysis({ reviews, ratingsBreakdown }: SentimentAnalys
             topPhrases: result.key_phrases || { positive: [], negative: [] },
           });
           
+        } else {
+          setData({
+            positive: 0,
+            neutral: 0,
+            negative: 0,
+            topPhrases: { positive: [], negative: [] },
+          });
         }
       } catch (error) {
         console.error('Error fetching sentiment data:', error);
+        setData({
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          topPhrases: { positive: [], negative: [] },
+        });
       }
     };
 
@@ -72,18 +99,32 @@ export function SentimentAnalysis({ reviews, ratingsBreakdown }: SentimentAnalys
 
       } catch (error) {
         console.error('Error fetching pain points:', error);
+        setSummary("No insights available.");
+        setPainPoints([]);
       }
     };
     
+    const fetchData = async () => {
+      setIsLoading(true);
+      await fetchSentimentData();
+      await fetchPainPoints();
+      setIsLoading(false);
+    };
 
-    if (reviews.length > 0) {
-      fetchSentimentData();
-      fetchPainPoints();
-    }
-  }, [reviews]);
+    fetchData();
+}, [reviews]);
 
-  if (!data || !summary || painPoints.length === 0) {
+  if (isLoading) {
     return <div>Loading Sentiment Analysis...</div>;
+  }
+
+  if (reviews.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-6">
+        <h3 className="text-xl font-bold text-gray-900">Customer Sentiment</h3>
+        <p className="text-gray-700">No reviews available for analysis.</p>
+      </div>
+    );
   }
 
   const validatedRatingsBreakdown = {
@@ -213,4 +254,6 @@ export function SentimentAnalysis({ reviews, ratingsBreakdown }: SentimentAnalys
     </div>
   );
 }
+
+
 
