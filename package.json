@@ -16,7 +16,7 @@
     "axios": "^1.7.9",
     "chart.js": "^4.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "express": "^4.18.3",
     "lucide-react": "^0.344.0",
     "openai": "^4.28.0",

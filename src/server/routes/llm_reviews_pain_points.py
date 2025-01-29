@@ -58,7 +58,13 @@ async def summarize_reviews(request: ReviewSummarizationRequest):
         prompt = (
             "You are a helpful assistant tasked with analyzing low-rated product reviews. "
             "Your goal is to identify key pain points and areas of dissatisfaction mentioned in the reviews. "
-            "Follow the format below:\n\n"
+            "Follow these strict rules while generating the response:\n\n"
+            "1. Start the response with 'Summary:' followed by a concise summary of the main issues.\n"
+            "2. Use a clear and structured format for pain points:\n"
+            "   - Each pain point must start with a dash ('- ').\n"
+            "   - Pain points should be short, specific, and actionable.\n"
+            "   - Avoid merging multiple pain points into one; list each as a separate bullet point.\n"
+            "3. Do not include any extra commentary or unrelated information.\n\n"
             "Example:\n"
             "Reviews:\n"
             "- The product stopped working after a week. Customer service was unresponsive.\n"
@@ -73,6 +79,7 @@ async def summarize_reviews(request: ReviewSummarizationRequest):
             "Now, analyze the following reviews and return the summary and pain points:\n"
         )
         prompt += "\n".join(f"- {review}" for review in low_rated_reviews)
+
         logger.debug(f"Generated prompt for OpenAI: {prompt}")
 
         # Call OpenAI's API using the new format

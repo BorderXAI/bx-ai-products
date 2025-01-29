@@ -39,11 +39,12 @@ export function SentimentAnalysis({ reviews, ratingsBreakdown }: SentimentAnalys
 
         if (result.breakdown) {
           setData({
-            positive: result.breakdown.positive / reviews.length,
-            neutral: result.breakdown.neutral / reviews.length,
-            negative: result.breakdown.negative / reviews.length,
-            topPhrases: result.key_phrases || [],
+            positive: result.breakdown?.positive / reviews.length || 0,
+            neutral: result.breakdown?.neutral / reviews.length || 0,
+            negative: result.breakdown?.negative / reviews.length || 0,
+            topPhrases: result.key_phrases || { positive: [], negative: [] },
           });
+          
         }
       } catch (error) {
         console.error('Error fetching sentiment data:', error);
